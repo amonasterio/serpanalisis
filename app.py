@@ -97,7 +97,7 @@ def getAnswerBox(search):
             snippet=''
             if "snippet" in answer:
                 snippet=answer['snippet']
-            resultado={"keyword":keyword,'link':link,'title':title,'snippet':snippet}        
+            resultado={"keyword":keyword,'url':link,'title':title,'snippet':snippet}        
             df=pd.DataFrame([resultado])
     return df
 
@@ -194,7 +194,7 @@ if f_keywords is not None:
         mime='text/csv'
         )
     
-    st.subheader("Consultas relacionadas")  
+    st.subheader("Búsquedas relacionadas")  
     st.download_button(
         label="Descargar como CSV",
         data= df_rs.to_csv(index=False).encode('utf-8'),
