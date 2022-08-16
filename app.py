@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from serpapi import GoogleSearch
+import requests
 
 
 st.set_page_config(
@@ -100,7 +101,21 @@ def getAnswerBox(search):
             df=pd.DataFrame([resultado])
     return df
 
+#para conocer los créditos restantes para hacer consultas en SerpAPI
+def getTotalSearchesLeft(apikey):
+    response = requests.get('https://serpapi.com/account?api_key='+apikey)
+    json=response.json()
+    restantes=0
+    if json is not None:
+        if 'total_searches_left' in json:
+            restantes=json['total_searches_left']
+    else:
+        restantes=-1
+    return restantes
+
 api_key= st.text_input('API key de SERPAPI', '')
+if api_key !='':
+    st.text("Créditos restantes en SerpApi: "+str(getTotalSearchesLeft(api_key)))
 google_domain=st.text_input('Dominio de Google a utilizar (https://serpapi.com/google-domains)', 'google.es')
 gl= st.text_input('País de la búsqueda (https://serpapi.com/google-countries)', 'es')
 hl= st.text_input('Idioma de la búsqueda (https://serpapi.com/google-languages)', 'es')
@@ -194,4 +209,4 @@ if f_keywords is not None:
         file_name='images.csv',
         mime='text/csv'
         )
-    
+    st.subheader("Créditos restantes en SerpApi: "+str(getTotalSearchesLeft(api_key)))
