@@ -22,8 +22,12 @@ def getRelatedQuestions(query):
         if "related_questions" in dictionary:
             l_rq=dictionary["related_questions"]
             for rq in l_rq:
-                resultado={"keyword":keyword,"position":dictionary["position"],"url":dictionary['link'],'question':rq['question'],'snippet':rq['snippet']}
-                resultados.append(resultado)
+                try:
+                    resultado={"keyword":keyword,"position":dictionary["position"],"url":dictionary['link'],'question':rq['question'],'snippet':rq['snippet']}
+                except Exception as e:
+                    st.error("Error related_questions consulta '"+keyword+"': "+e.args[0])
+                else:
+                    resultados.append(resultado)
     df=pd.DataFrame(resultados)
     return df
     
@@ -35,9 +39,13 @@ def getRelatedSearches(search):
     if 'related_searches' in results:
         related= results['related_searches']
         for dictionary in related:
-            query=dictionary["query"]
-            resultado={"keyword":keyword,"query":query}
-            resultados.append(resultado)
+            try:
+                query=dictionary["query"]
+                resultado={"keyword":keyword,"query":query}
+            except Exception as e:
+                st.error("Error related_searches consulta '"+keyword+"': "+e.args[0])
+            else:
+                resultados.append(resultado)
     df=pd.DataFrame(resultados)
     return df
 
@@ -56,13 +64,17 @@ def getPeopleAlsoAsk(search):
     if 'related_questions' in results:
         paa= results['related_questions']
         for dictionary in paa:
-            question=dictionary["question"]
-            link=dictionary['link']
-            snippet=''
-            if "snippet" in dictionary:
-                snippet=dictionary["snippet"]
-            resultado={"keyword":keyword,"question":question,"url":link,"snippet":snippet}
-            resultados.append(resultado)
+            try:
+                question=dictionary["question"]
+                link=dictionary['link']
+                snippet=''
+                if "snippet" in dictionary:
+                    snippet=dictionary["snippet"]
+                resultado={"keyword":keyword,"question":question,"url":link,"snippet":snippet}
+            except Exception as e:
+                st.error("Error people_also_ask consulta '"+keyword+"': "+e.args[0])
+            else:
+                resultados.append(resultado)
     df=pd.DataFrame(resultados)
     return df
 
@@ -76,9 +88,10 @@ def getInlineImages(search):
     if 'inline_images' in results:
         imgs= results['inline_images']
         for dictionary in imgs:
-            link=dictionary["source"]
-            resultado={"keyword":keyword,"img_link_url":link}
-            resultados.append(resultado)
+            if 'source' in dictionary:
+                link=dictionary["source"]
+                resultado={"keyword":keyword,"img_link_url":link}
+                resultados.append(resultado)
     df=pd.DataFrame(resultados)
     return df
 
@@ -92,13 +105,16 @@ def getAnswerBox(search):
     if 'answer_box' in results:
         answer= results['answer_box']
         if answer['type']=='organic_result':
-            title=answer['title']
-            link=answer['link']
-            snippet=''
-            if "snippet" in answer:
-                snippet=answer['snippet']
-            resultado={"keyword":keyword,'url':link,'title':title,'snippet':snippet}        
-            df=pd.DataFrame([resultado])
+            try:
+                title=answer['title']
+                link=answer['link']
+                snippet=''
+                if "snippet" in answer:
+                    snippet=answer['snippet']
+                resultado={"keyword":keyword,'url':link,'title':title,'snippet':snippet}        
+                df=pd.DataFrame([resultado])
+            except Exception as e:
+                st.error("Error answer_box consulta '"+keyword+"': "+e.args[0])
     return df
 
 #para conocer los créditos restantes para hacer consultas en SerpAPI
@@ -157,9 +173,10 @@ if f_keywords is not None:
             df=getPeopleAlsoAsk(search)
             df_paa=pd.concat([df_paa, df]) 
             
-        
+            
             df=getInlineImages(search)
             df_img=pd.concat([df_img,df])
+           
 
             df=getRelatedQuestions(search)
             df_faq=pd.concat([df_faq,df])
