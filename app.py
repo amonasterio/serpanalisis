@@ -107,10 +107,13 @@ def getAnswerBox(search):
         if answer['type']=='organic_result':
             try:
                 title=answer['title']
-                link=answer['link']
+                if 'link' in answer:
+                    link=answer['link']
                 snippet=''
                 if "snippet" in answer:
                     snippet=answer['snippet']
+                elif 'answer' in answer:
+                    snippet=answer['answer']
                 resultado={"keyword":keyword,'url':link,'title':title,'snippet':snippet}        
                 df=pd.DataFrame([resultado])
             except Exception as e:
