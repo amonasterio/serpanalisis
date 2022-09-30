@@ -191,6 +191,7 @@ if f_keywords is not None:
             df_rs=pd.concat([df_rs,df])
         
     st.subheader("Otras preguntas de los usuarios")
+    st.dataframe(df_paa)
     st.download_button(
         label="Descargar como CSV",
         data=df_paa.to_csv(index=False).encode('utf-8'),
@@ -199,6 +200,7 @@ if f_keywords is not None:
         )
 
     st.subheader("FAQs en resultados")
+    st.dataframe(df_faq)
     st.download_button(
         label="Descargar como CSV",
         data= df_faq.to_csv(index=False).encode('utf-8'),
@@ -207,6 +209,7 @@ if f_keywords is not None:
         )
     
     st.subheader("Answer box (posición 0)")
+    st.dataframe(df_ab)
     st.download_button(
         label="Descargar como CSV",
         data= df_ab.to_csv(index=False).encode('utf-8'),
@@ -215,6 +218,7 @@ if f_keywords is not None:
         )
     
     st.subheader("Búsquedas relacionadas")  
+    st.dataframe(df_rs)
     st.download_button(
         label="Descargar como CSV",
         data= df_rs.to_csv(index=False).encode('utf-8'),
@@ -223,6 +227,7 @@ if f_keywords is not None:
         )
 
     st.subheader("Imágenes")
+    st.dataframe(df_img)
     st.download_button(
         label="Descargar como CSV",
         data= df_img.to_csv(index=False).encode('utf-8'),
