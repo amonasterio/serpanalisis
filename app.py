@@ -11,6 +11,8 @@ st.set_page_config(
 
 st.title("Análisis de competidores en SERP")
 
+
+
 #related questions dentro de un resultado
 def getRelatedQuestions(query):
     keyword=getQuery(search)
@@ -120,6 +122,41 @@ def getAnswerBox(search):
                 st.error("Error answer_box consulta '"+keyword+"': "+e.args[0])
     return df
 
+#Devuelve los resultados orgánicos
+def getOrganicResults(search):
+    keyword=getQuery(search)
+    resultados=[]
+    resultado={}
+    results = search.get_dict()
+    df=None
+    if 'organic_results' in results:
+        res= results['organic_results']
+        for dictionary in res:
+            extensiones=[]
+            postion=dictionary["position"]
+            link=dictionary["link"]
+            title=dictionary["title"]
+            if 'snippet' in dictionary:
+                snippet=dictionary["snippet"]
+            if 'rich_snippet' in dictionary:
+                rich=dictionary["rich_snippet"]
+                if 'top' in rich:
+                    top=rich['top']
+                    extensiones=top['extensions']
+                elif 'bottom' in rich:
+                    bottom=rich['bottom']
+                    extensiones=bottom['extensions']
+            resultado={"Query":keyword,"Position":postion,"Link":link,"Title":title,"Snippet":snippet}
+            i=1
+            for item in extensiones:
+                resultado["Extension_"+str(i)]=item
+                i+=1
+            resultados.append(resultado)
+    df=pd.DataFrame(resultados)
+    return df
+
+
+
 #para conocer los créditos restantes para hacer consultas en SerpAPI
 def getTotalSearchesLeft(apikey):
     response = requests.get('https://serpapi.com/account?api_key='+apikey)
@@ -131,6 +168,12 @@ def getTotalSearchesLeft(apikey):
     else:
         restantes=-1
     return restantes
+
+#Elimina los duplicados de una lista
+def eliminaDuplicadosLista(lista):
+    if len(lista)>0:
+        lista=list(dict.fromkeys(lista))
+    return lista
 
 api_key= st.text_input('API key de SERPAPI', '')
 if api_key !='':
@@ -155,31 +198,42 @@ params = {
   "num": num_resultados
 }
 
+lista_consultas=st.text_area("Introduzca las consultas que desea analizar o cárguelas en un CSV",'')
+csv=st.file_uploader('CSV con keywords a analizar', type='csv')
+consultas=[]
 
-f_keywords=st.file_uploader('CSV con keywords a analizar', type='csv')
-
-
-if f_keywords is not None:
-    df_entrada=pd.read_csv(f_keywords,header=None)
-    lista_kws=df_entrada[0].to_list()
+#Si no hay CSV miramos el textArea
+if csv is  None:
+    if len(lista_consultas)>0:
+        consultas=lista_consultas.split('\n')
+else: 
+    df_entrada=pd.read_csv(csv,header=None)
+    st.write(df_entrada)
+    consultas = df_entrada[0].tolist()
+if len(consultas)>0:
+    #Eliminamos posibles duplicados
+    lista=eliminaDuplicadosLista(consultas)
+    total_count=0
+    bar = st.progress(0.0)
+    longitud=len(lista)
     appended_data = []
     df_paa = pd.DataFrame(appended_data)
     df_img = pd.DataFrame(appended_data)
     df_faq = pd.DataFrame(appended_data)
     df_ab = pd.DataFrame(appended_data)
     df_rs = pd.DataFrame(appended_data)
-    for kw in lista_kws:
+    for kw in lista:
+        total_count+=1
+        percent_complete=total_count/longitud 
         keyword=kw
         params['q'] =keyword
         search = GoogleSearch(params)
         if search is not None:
             df=getPeopleAlsoAsk(search)
             df_paa=pd.concat([df_paa, df]) 
-            
-            
-            df=getInlineImages(search)
+              
+            df=getOrganicResults(search)
             df_img=pd.concat([df_img,df])
-           
 
             df=getRelatedQuestions(search)
             df_faq=pd.concat([df_faq,df])
@@ -189,7 +243,7 @@ if f_keywords is not None:
 
             df=getRelatedSearches(search)
             df_rs=pd.concat([df_rs,df])
-        
+        bar.progress(percent_complete)
     st.subheader("Otras preguntas de los usuarios")
     st.dataframe(df_paa)
     st.download_button(
@@ -226,12 +280,14 @@ if f_keywords is not None:
         mime='text/csv'
         )
 
-    st.subheader("Imágenes")
+    st.subheader("Resultados orgánicos")
     st.dataframe(df_img)
     st.download_button(
         label="Descargar como CSV",
         data= df_img.to_csv(index=False).encode('utf-8'),
-        file_name='images.csv',
+        file_name='organicos.csv',
         mime='text/csv'
         )
     st.subheader("Créditos restantes en SerpApi: "+str(getTotalSearchesLeft(api_key)))
+else:
+    st.warning("No ha introducido ninguna consulta") 
