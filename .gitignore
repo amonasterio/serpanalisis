@@ -1,2 +1,4 @@
 *.csv
 app_test.py
+test_credits.py
+test.log
