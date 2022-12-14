@@ -2,8 +2,8 @@ import streamlit as st
 import pandas as pd
 from serpapi import GoogleSearch
 import requests
-
-
+import logging
+logging.basicConfig(filename='test.log')
 st.set_page_config(
    page_title="Análisis de competidores en SERP",
    layout="wide"
@@ -16,6 +16,7 @@ st.title("Análisis de competidores en SERP")
 #related questions dentro de un resultado
 def getRelatedQuestions(query):
     keyword=getQuery(search)
+    logging.info("Obtenemos Related Questions (FAQ) de consulta: "+keyword)
     resultados=[]
     resultado={}
     results = search.get_dict()
@@ -27,6 +28,7 @@ def getRelatedQuestions(query):
                 try:
                     resultado={"keyword":keyword,"position":dictionary["position"],"url":dictionary['link'],'question':rq['question'],'snippet':rq['snippet']}
                 except Exception as e:
+                    logging.error("Error procesando Related Questions: "+keyword)
                     st.error("Error related_questions consulta '"+keyword+"': "+e.args[0])
                 else:
                     resultados.append(resultado)
@@ -35,6 +37,7 @@ def getRelatedQuestions(query):
     
 def getRelatedSearches(search):
     keyword=getQuery(search)
+    logging.info("Obtenemos Related Searches de consulta: "+keyword)
     resultados=[]
     resultado={}
     results = search.get_dict()
@@ -45,6 +48,7 @@ def getRelatedSearches(search):
                 query=dictionary["query"]
                 resultado={"keyword":keyword,"query":query}
             except Exception as e:
+                logging.error("Error procesando Related Searches: "+keyword)
                 st.error("Error related_searches consulta '"+keyword+"': "+e.args[0])
             else:
                 resultados.append(resultado)
@@ -60,6 +64,7 @@ def getQuery(search):
 
 def getPeopleAlsoAsk(search):
     keyword=getQuery(search)
+    logging.info("Obtenemos People Also Ask de consulta: "+keyword)
     resultados=[]
     resultado={}
     results = search.get_dict()
@@ -74,6 +79,7 @@ def getPeopleAlsoAsk(search):
                     snippet=dictionary["snippet"]
                 resultado={"keyword":keyword,"question":question,"url":link,"snippet":snippet}
             except Exception as e:
+                logging.error("Error procesando People Also Ask: "+keyword) 
                 st.error("Error people_also_ask consulta '"+keyword+"': "+e.args[0])
             else:
                 resultados.append(resultado)
@@ -101,6 +107,7 @@ def getInlineImages(search):
 
 def getAnswerBox(search):
     keyword=getQuery(search)
+    logging.info("Obtenemos Answer Box de consulta: "+keyword)
     resultado={}
     results = search.get_dict()
     df=None
@@ -119,12 +126,15 @@ def getAnswerBox(search):
                 resultado={"keyword":keyword,'url':link,'title':title,'snippet':snippet}        
                 df=pd.DataFrame([resultado])
             except Exception as e:
-                st.error("Error answer_box consulta '"+keyword+"': "+e.args[0])
+                logging.error("Error procesando answer box: "+keyword) 
+                if e is not None:
+                    st.error("Error answer_box consulta '"+keyword+"': "+e.args[0])
     return df
 
 #Devuelve los resultados orgánicos
 def getOrganicResults(search):
     keyword=getQuery(search)
+    logging.info("Obtenemos Organic Results de consulta: "+keyword)
     resultados=[]
     resultado={}
     results = search.get_dict()
