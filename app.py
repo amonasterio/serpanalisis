@@ -14,7 +14,6 @@ st.title("Análisis de competidores en SERP")
 
 
 #related questions dentro de un resultado
-@st.experimental_memo
 def getRelatedQuestions(_search):
     keyword=getQuery(_search)
     logging.info("Obtenemos Related Questions (FAQ) de consulta: "+keyword)
@@ -36,7 +35,7 @@ def getRelatedQuestions(_search):
     df=pd.DataFrame(resultados)
     return df
 
-@st.experimental_memo   
+
 def getRelatedSearches(_search):
     keyword=getQuery(_search)
     logging.info("Obtenemos Related Searches de consulta: "+keyword)
@@ -64,7 +63,7 @@ def getQuery(search):
     query=parameters['q']
     return query
 
-@st.experimental_memo
+
 def getPeopleAlsoAsk(_search):
     keyword=getQuery(_search)
     logging.info("Obtenemos People Also Ask de consulta: "+keyword)
@@ -89,7 +88,7 @@ def getPeopleAlsoAsk(_search):
     df=pd.DataFrame(resultados)
     return df
 
-@st.experimental_memo
+
 def getInlineImages(_search):
     keyword=getQuery(_search)
     resultados=[]
@@ -107,7 +106,6 @@ def getInlineImages(_search):
     return df
 
 
-@st.experimental_memo
 def getAnswerBox(_search):
     keyword=getQuery(_search)
     logging.info("Obtenemos Answer Box de consulta: "+keyword)
@@ -135,7 +133,6 @@ def getAnswerBox(_search):
     return df
 
 #Devuelve los resultados orgánicos
-@st.experimental_memo
 def getOrganicResults(_search):
     keyword=getQuery(_search)
     logging.info("Obtenemos Organic Results de consulta: "+keyword)
@@ -183,11 +180,17 @@ def getTotalSearchesLeft(apikey):
         restantes=-1
     return restantes
 
-#Elimina los duplicados de una lista
-def eliminaDuplicadosLista(lista):
-    if len(lista)>0:
-        lista=list(dict.fromkeys(lista))
-    return lista
+#Elimina los espacios en blanco al principio y al final, los elementos vacíos y los duplicados de una lista
+def depurarLista(lista):
+    new_lista=[]
+    for elemento in lista:
+        elemento=elemento.strip()
+        if len(elemento)>0:
+            new_lista.append(elemento)
+    if len(new_lista)>0:
+        new_lista=list(dict.fromkeys(new_lista))
+    
+    return new_lista
 
 api_key= st.text_input('API key de SERPAPI', '')
 if api_key !='':
@@ -211,10 +214,17 @@ params = {
   "device": device,
   "num": num_resultados
 }
+st.write("Selecciona los datos que desas obtener:")
+paa_check = st.checkbox('People also ask', value=True)
+related_s_check = st.checkbox('Related searches', value=True)
+answer_box_check = st.checkbox('Answer box', value=True)
+related_q_check=st.checkbox('Related questions (FAQ)', value=True)
+organic_check = st.checkbox('Organic results', value=True)
 
 lista_consultas=st.text_area("Introduzca las consultas que desea analizar o cárguelas en un CSV",'')
 csv=st.file_uploader('CSV con keywords a analizar', type='csv')
 consultas=[]
+
 
 #Si no hay CSV miramos el textArea
 if csv is  None:
@@ -226,13 +236,13 @@ else:
     consultas = df_entrada[0].tolist()
 if len(consultas)>0:
     #Eliminamos posibles duplicados
-    lista=eliminaDuplicadosLista(consultas)
+    lista=depurarLista(consultas)
     total_count=0
     bar = st.progress(0.0)
     longitud=len(lista)
     appended_data = []
     df_paa = pd.DataFrame(appended_data)
-    df_img = pd.DataFrame(appended_data)
+    df_org = pd.DataFrame(appended_data)
     df_faq = pd.DataFrame(appended_data)
     df_ab = pd.DataFrame(appended_data)
     df_rs = pd.DataFrame(appended_data)
@@ -244,65 +254,87 @@ if len(consultas)>0:
         params['q'] =keyword
         search = GoogleSearch(params)
         if search is not None:
-            df=getPeopleAlsoAsk(search)
-            df_paa=pd.concat([df_paa, df]) 
-              
-            df=getOrganicResults(search)
-            df_img=pd.concat([df_img,df])
+            if paa_check:
+                df=getPeopleAlsoAsk(search)
+                df_paa=pd.concat([df_paa, df]) 
+               
 
-            df=getRelatedQuestions(search)
-            df_faq=pd.concat([df_faq,df])
+            if organic_check:
+                df=getOrganicResults(search)
+                df_org=pd.concat([df_org,df])
+                
 
-            df=getAnswerBox(search)
-            df_ab=pd.concat([df_ab,df])
+            if related_q_check:
+                df=getRelatedQuestions(search)
+                df_faq=pd.concat([df_faq,df])
 
-            df=getRelatedSearches(search)
-            df_rs=pd.concat([df_rs,df])
+            if answer_box_check:
+                df=getAnswerBox(search)
+                df_ab=pd.concat([df_ab,df])
+                
+            if related_s_check:
+                df=getRelatedSearches(search)
+                df_rs=pd.concat([df_rs,df])
+        
         bar.progress(percent_complete)
-    st.subheader("Otras preguntas de los usuarios")
-    st.dataframe(df_paa)
-    st.download_button(
-        label="Descargar como CSV",
-        data=df_paa.to_csv(index=False).encode('utf-8'),
-        file_name='people_also_ask.csv',
-        mime='text/csv'
-        )
-
-    st.subheader("FAQs en resultados")
-    st.dataframe(df_faq)
-    st.download_button(
-        label="Descargar como CSV",
-        data= df_faq.to_csv(index=False).encode('utf-8'),
-        file_name='faqs.csv',
-        mime='text/csv'
-        )
     
-    st.subheader("Answer box (posición 0)")
-    st.dataframe(df_ab)
-    st.download_button(
-        label="Descargar como CSV",
-        data= df_ab.to_csv(index=False).encode('utf-8'),
-        file_name='answer_box.csv',
-        mime='text/csv'
-        )
-    
-    st.subheader("Búsquedas relacionadas")  
-    st.dataframe(df_rs)
-    st.download_button(
-        label="Descargar como CSV",
-        data= df_rs.to_csv(index=False).encode('utf-8'),
-        file_name='related_searches.csv',
-        mime='text/csv'
-        )
+    if paa_check:
+        st.subheader("Otras preguntas de los usuarios")
+        st.dataframe(df_paa)
+        st.download_button(
+            key="paa",
+            label="Descargar como CSV",
+            data=df_paa.to_csv(index=False).encode('utf-8'),
+            file_name='people_also_ask.csv',
+            mime='text/csv'
+            )
 
-    st.subheader("Resultados orgánicos")
-    st.dataframe(df_img)
-    st.download_button(
-        label="Descargar como CSV",
-        data= df_img.to_csv(index=False).encode('utf-8'),
-        file_name='organicos.csv',
-        mime='text/csv'
-        )
+    if related_s_check:
+        st.subheader("Búsquedas relacionadas")  
+        st.dataframe(df_rs)
+        st.download_button(
+            key="related",
+            label="Descargar como CSV",
+            data= df_rs.to_csv(index=False).encode('utf-8'),
+            file_name='related_searches.csv',
+            mime='text/csv'
+            )
+            
+    if answer_box_check:
+        st.subheader("Answer box (posición 0)")
+        st.dataframe(df_ab)
+        st.download_button(
+            key="answer",
+            label="Descargar como CSV",
+            data= df_ab.to_csv(index=False).encode('utf-8'),
+            file_name='answer_box.csv',
+            mime='text/csv'
+            )
+
+    if related_q_check:
+        st.subheader("FAQs en resultados")
+        st.dataframe(df_faq)
+        st.download_button(
+            key="faq",
+            label="Descargar como CSV",
+            data= df_faq.to_csv(index=False).encode('utf-8'),
+            file_name='faqs.csv',
+            mime='text/csv'
+            )
+
+    if organic_check:
+        st.subheader("Resultados orgánicos")
+        st.dataframe(df_org)
+        st.download_button(
+            key="organicos",
+            label="Descargar como CSV",
+            data= df_org.to_csv(index=False).encode('utf-8'),
+            file_name='organicos.csv',
+            mime='text/csv'
+            )
+    
+    
+   
     st.subheader("Créditos restantes en SerpApi: "+str(getTotalSearchesLeft(api_key)))
 else:
     st.warning("No ha introducido ninguna consulta") 
