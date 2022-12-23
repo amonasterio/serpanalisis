@@ -14,8 +14,9 @@ st.title("Análisis de competidores en SERP")
 
 
 #related questions dentro de un resultado
-def getRelatedQuestions(query):
-    keyword=getQuery(search)
+@st.experimental_memo
+def getRelatedQuestions(_search):
+    keyword=getQuery(_search)
     logging.info("Obtenemos Related Questions (FAQ) de consulta: "+keyword)
     resultados=[]
     resultado={}
@@ -34,9 +35,10 @@ def getRelatedQuestions(query):
                     resultados.append(resultado)
     df=pd.DataFrame(resultados)
     return df
-    
-def getRelatedSearches(search):
-    keyword=getQuery(search)
+
+@st.experimental_memo   
+def getRelatedSearches(_search):
+    keyword=getQuery(_search)
     logging.info("Obtenemos Related Searches de consulta: "+keyword)
     resultados=[]
     resultado={}
@@ -62,8 +64,9 @@ def getQuery(search):
     query=parameters['q']
     return query
 
-def getPeopleAlsoAsk(search):
-    keyword=getQuery(search)
+@st.experimental_memo
+def getPeopleAlsoAsk(_search):
+    keyword=getQuery(_search)
     logging.info("Obtenemos People Also Ask de consulta: "+keyword)
     resultados=[]
     resultado={}
@@ -86,9 +89,9 @@ def getPeopleAlsoAsk(search):
     df=pd.DataFrame(resultados)
     return df
 
-
-def getInlineImages(search):
-    keyword=getQuery(search)
+@st.experimental_memo
+def getInlineImages(_search):
+    keyword=getQuery(_search)
     resultados=[]
     resultado={}
     results = search.get_dict()
@@ -104,9 +107,9 @@ def getInlineImages(search):
     return df
 
 
-
-def getAnswerBox(search):
-    keyword=getQuery(search)
+@st.experimental_memo
+def getAnswerBox(_search):
+    keyword=getQuery(_search)
     logging.info("Obtenemos Answer Box de consulta: "+keyword)
     resultado={}
     results = search.get_dict()
@@ -132,8 +135,9 @@ def getAnswerBox(search):
     return df
 
 #Devuelve los resultados orgánicos
-def getOrganicResults(search):
-    keyword=getQuery(search)
+@st.experimental_memo
+def getOrganicResults(_search):
+    keyword=getQuery(_search)
     logging.info("Obtenemos Organic Results de consulta: "+keyword)
     resultados=[]
     resultado={}
@@ -234,6 +238,7 @@ if len(consultas)>0:
     df_rs = pd.DataFrame(appended_data)
     for kw in lista:
         total_count+=1
+        logging.info(str(total_count)+": "+kw)
         percent_complete=total_count/longitud 
         keyword=kw
         params['q'] =keyword
