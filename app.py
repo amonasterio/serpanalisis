@@ -153,10 +153,12 @@ def getOrganicResults(_search):
                 rich=dictionary["rich_snippet"]
                 if 'top' in rich:
                     top=rich['top']
-                    extensiones=top['extensions']
+                    if 'extensions' in top:
+                        extensiones=top['extensions']
                 elif 'bottom' in rich:
                     bottom=rich['bottom']
-                    extensiones=bottom['extensions']
+                    if 'extensions' in bottom:
+                        extensiones=bottom['extensions']
             resultado={"Query":keyword,"Position":postion,"Link":link,"Title":title,"Snippet":snippet}
             i=1
             for item in extensiones:
