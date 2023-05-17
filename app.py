@@ -14,28 +14,33 @@ st.title("Análisis de competidores en SERP")
 
 
 #related questions dentro de un resultado
+@st.cache_data
 def getRelatedQuestions(_search):
     keyword=getQuery(_search)
     logging.info("Obtenemos Related Questions (FAQ) de consulta: "+keyword)
     resultados=[]
     resultado={}
     results = search.get_dict()
-    organic= results['organic_results']
-    for dictionary in organic:
-        if "related_questions" in dictionary:
-            l_rq=dictionary["related_questions"]
-            for rq in l_rq:
-                try:
-                    resultado={"keyword":keyword,"position":dictionary["position"],"url":dictionary['link'],'question':rq['question'],'snippet':rq['snippet']}
-                except Exception as e:
-                    logging.error("Error procesando Related Questions: "+keyword)
-                    st.error("Error related_questions consulta '"+keyword+"': "+e.args[0])
-                else:
-                    resultados.append(resultado)
+    if 'organic_results' in results:
+        organic= results['organic_results']
+        for dictionary in organic:
+            if "related_questions" in dictionary:
+                l_rq=dictionary["related_questions"]
+                for rq in l_rq:
+                    try:
+                        resultado={"keyword":keyword,"position":dictionary["position"],"url":dictionary['link'],'question':rq['question'],'snippet':rq['snippet']}
+                    except Exception as e:
+                        logging.error("Error procesando Related Questions: "+keyword)
+                        st.error("Error related_questions consulta '"+keyword+"': "+e.args[0])
+                    else:
+                        resultados.append(resultado)
+    else: 
+        logging.warning("No hay organic results para obtener las FAQs es snippets: "+keyword)
+        st.error("No hay organic results para obtener las FAQs es snippets:'"+keyword)
     df=pd.DataFrame(resultados)
     return df
 
-
+@st.cache_data
 def getRelatedSearches(_search):
     keyword=getQuery(_search)
     logging.info("Obtenemos Related Searches de consulta: "+keyword)
@@ -56,14 +61,14 @@ def getRelatedSearches(_search):
     df=pd.DataFrame(resultados)
     return df
 
-
-def getQuery(search):
-    dict = search.get_dict()
+@st.cache_data
+def getQuery(_search):
+    dict = _search.get_dict()
     parameters=dict["search_parameters"]
     query=parameters['q']
     return query
 
-
+@st.cache_data
 def getPeopleAlsoAsk(_search):
     keyword=getQuery(_search)
     logging.info("Obtenemos People Also Ask de consulta: "+keyword)
@@ -88,7 +93,7 @@ def getPeopleAlsoAsk(_search):
     df=pd.DataFrame(resultados)
     return df
 
-
+@st.cache_data
 def getInlineImages(_search):
     keyword=getQuery(_search)
     resultados=[]
@@ -105,7 +110,7 @@ def getInlineImages(_search):
     df=pd.DataFrame(resultados)
     return df
 
-
+@st.cache_data 
 def getAnswerBox(_search):
     keyword=getQuery(_search)
     logging.info("Obtenemos Answer Box de consulta: "+keyword)
@@ -133,6 +138,7 @@ def getAnswerBox(_search):
     return df
 
 #Devuelve los resultados orgánicos
+@st.cache_data
 def getOrganicResults(_search):
     keyword=getQuery(_search)
     logging.info("Obtenemos Organic Results de consulta: "+keyword)
