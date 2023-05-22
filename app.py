@@ -15,8 +15,9 @@ st.title("Análisis de competidores en SERP")
 
 #related questions dentro de un resultado
 @st.cache_data
-def getRelatedQuestions(_search):
-    keyword=getQuery(_search)
+def getRelatedQuestions(params):
+    search = GoogleSearch(params)
+    keyword=getQuery(search)
     logging.info("Obtenemos Related Questions (FAQ) de consulta: "+keyword)
     resultados=[]
     resultado={}
@@ -41,8 +42,9 @@ def getRelatedQuestions(_search):
     return df
 
 @st.cache_data
-def getRelatedSearches(_search):
-    keyword=getQuery(_search)
+def getRelatedSearches(params):
+    search = GoogleSearch(params)
+    keyword=getQuery(search)
     logging.info("Obtenemos Related Searches de consulta: "+keyword)
     resultados=[]
     resultado={}
@@ -61,16 +63,17 @@ def getRelatedSearches(_search):
     df=pd.DataFrame(resultados)
     return df
 
-@st.cache_data
-def getQuery(_search):
-    dict = _search.get_dict()
+
+def getQuery(search):
+    dict = search.get_dict()
     parameters=dict["search_parameters"]
     query=parameters['q']
     return query
 
 @st.cache_data
-def getPeopleAlsoAsk(_search):
-    keyword=getQuery(_search)
+def getPeopleAlsoAsk(params):
+    search = GoogleSearch(params)
+    keyword=getQuery(search)
     logging.info("Obtenemos People Also Ask de consulta: "+keyword)
     resultados=[]
     resultado={}
@@ -94,8 +97,9 @@ def getPeopleAlsoAsk(_search):
     return df
 
 @st.cache_data
-def getInlineImages(_search):
-    keyword=getQuery(_search)
+def getInlineImages(params):
+    search = GoogleSearch(params)
+    keyword=getQuery(search)
     resultados=[]
     resultado={}
     results = search.get_dict()
@@ -111,8 +115,9 @@ def getInlineImages(_search):
     return df
 
 @st.cache_data 
-def getAnswerBox(_search):
-    keyword=getQuery(_search)
+def getAnswerBox(params):
+    search = GoogleSearch(params)
+    keyword=getQuery(search)
     logging.info("Obtenemos Answer Box de consulta: "+keyword)
     resultado={}
     results = search.get_dict()
@@ -137,10 +142,13 @@ def getAnswerBox(_search):
                     st.error("Error answer_box consulta '"+keyword+"': "+e.args[0])
     return df
 
+
+
 #Devuelve los resultados orgánicos
 @st.cache_data
-def getOrganicResults(_search):
-    keyword=getQuery(_search)
+def getOrganicResults(params):
+    search = GoogleSearch(params)
+    keyword=getQuery(search)
     logging.info("Obtenemos Organic Results de consulta: "+keyword)
     resultados=[]
     resultado={}
@@ -260,29 +268,27 @@ if len(consultas)>0:
         percent_complete=total_count/longitud 
         keyword=kw
         params['q'] =keyword
-        search = GoogleSearch(params)
-        if search is not None:
-            if paa_check:
-                df=getPeopleAlsoAsk(search)
-                df_paa=pd.concat([df_paa, df]) 
-               
+        if paa_check:
+            df=getPeopleAlsoAsk(params)
+            df_paa=pd.concat([df_paa, df]) 
+            
 
-            if organic_check:
-                df=getOrganicResults(search)
-                df_org=pd.concat([df_org,df])
-                
+        if organic_check:
+            df=getOrganicResults(params)
+            df_org=pd.concat([df_org,df])
+            
 
-            if related_q_check:
-                df=getRelatedQuestions(search)
-                df_faq=pd.concat([df_faq,df])
+        if related_q_check:
+            df=getRelatedQuestions(params)
+            df_faq=pd.concat([df_faq,df])
 
-            if answer_box_check:
-                df=getAnswerBox(search)
-                df_ab=pd.concat([df_ab,df])
-                
-            if related_s_check:
-                df=getRelatedSearches(search)
-                df_rs=pd.concat([df_rs,df])
+        if answer_box_check:
+            df=getAnswerBox(params)
+            df_ab=pd.concat([df_ab,df])
+            
+        if related_s_check:
+            df=getRelatedSearches(params)
+            df_rs=pd.concat([df_rs,df])
         
         bar.progress(percent_complete)
     
