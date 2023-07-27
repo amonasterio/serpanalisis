@@ -3,7 +3,8 @@ import pandas as pd
 from serpapi import GoogleSearch
 import requests
 import logging
-logging.basicConfig(filename='test.log')
+logging.basicConfig(filename='serpanalisis_log.log')
+
 st.set_page_config(
    page_title="Análisis de competidores en SERP",
    layout="wide"
@@ -154,31 +155,37 @@ def getOrganicResults(params):
     resultado={}
     results = search.get_dict()
     df=None
+    snippet=None
     if 'organic_results' in results:
         res= results['organic_results']
-        for dictionary in res:
-            extensiones=[]
-            postion=dictionary["position"]
-            link=dictionary["link"]
-            title=dictionary["title"]
-            if 'snippet' in dictionary:
-                snippet=dictionary["snippet"]
-            if 'rich_snippet' in dictionary:
-                rich=dictionary["rich_snippet"]
-                if 'top' in rich:
-                    top=rich['top']
-                    if 'extensions' in top:
-                        extensiones=top['extensions']
-                elif 'bottom' in rich:
-                    bottom=rich['bottom']
-                    if 'extensions' in bottom:
-                        extensiones=bottom['extensions']
-            resultado={"Query":keyword,"Position":postion,"Link":link,"Title":title,"Snippet":snippet}
-            i=1
-            for item in extensiones:
-                resultado["Extension_"+str(i)]=item
-                i+=1
-            resultados.append(resultado)
+        try:
+            for dictionary in res:
+                extensiones=[]
+                postion=dictionary["position"]
+                link=dictionary["link"]
+                title=dictionary["title"]
+                if 'snippet' in dictionary:
+                    snippet=dictionary["snippet"]
+                if 'rich_snippet' in dictionary:
+                    rich=dictionary["rich_snippet"]
+                    if 'top' in rich:
+                        top=rich['top']
+                        if 'extensions' in top:
+                            extensiones=top['extensions']
+                    elif 'bottom' in rich:
+                        bottom=rich['bottom']
+                        if 'extensions' in bottom:
+                            extensiones=bottom['extensions']
+                resultado={"Query":keyword,"Position":postion,"Link":link,"Title":title,"Snippet":snippet}
+                i=1
+                for item in extensiones:
+                    resultado["Extension_"+str(i)]=item
+                    i+=1
+                resultados.append(resultado)
+        except Exception as e:
+            logging.error("Error procesando organic_results: "+keyword) 
+            if e is not None:
+                st.error("Error organic_results consulta '"+keyword+"': "+e.args[0])    
     df=pd.DataFrame(resultados)
     return df
 
